@@ -1,6 +1,6 @@
 import logging
 
-from src.utils.config import LOG_DIR,LOG_FORMAT, DATE_FORMAT
+from shared.config.config import LOG_DIR,LOG_FORMAT, DATE_FORMAT
 
 def get_logger(
     name:str,

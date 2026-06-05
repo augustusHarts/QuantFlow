@@ -1,6 +1,8 @@
-from shared.models.ingestion_models import IngestionResult
+from services.ingestion.interfaces.transformation import Transformation
 
-class YahooTransformer:
+import pandas as pd
+
+class YahooTransformer(Transformation):
 
     def __init__(
         self,
@@ -10,6 +12,7 @@ class YahooTransformer:
 
     def transform(
         self,
-        raw_data: IngestionResult
-    ):
-        pass
+        df
+    ) -> pd.DataFrame:
+
+        return pd.DataFrame()

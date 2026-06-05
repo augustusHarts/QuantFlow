@@ -3,8 +3,8 @@ from datetime import datetime
 
 @dataclass
 class IngestionResult:
-    successful: dict
-    failed: dict
+    successful: dict[str, dict]
+    failed: dict[str, BaseException]
 
 @dataclass
 class HistoricalPrice:

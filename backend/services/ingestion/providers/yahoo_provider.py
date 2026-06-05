@@ -1,18 +1,20 @@
 import asyncio
 import aiohttp
+import logging 
 
 from shared.config.ingestion_config import BASE_URL, YAHOO_INTERVAL, YAHOO_RANGE, API_TIMEOUT
+from services.ingestion.interfaces.provider import Provider
 from shared.exceptions.ingestion_exceptions import (
     YahooFetchError,
     YahooRateLimitError,
     YahooInvalidResponseError
 )
 
-class YahooProvider:
+class YahooProvider(Provider):
 
     def __init__(
-        self, 
-        logger
+        self,
+        logger: logging.Logger
     ):
         self.base_url = BASE_URL
         self.range = YAHOO_RANGE
@@ -20,7 +22,7 @@ class YahooProvider:
         self.timeout = API_TIMEOUT
         self.logger = logger
 
-    async def fetch_price(
+    async def fetch(
         self, 
         symbol: str, 
         session: aiohttp.ClientSession
@@ -62,7 +64,7 @@ class YahooProvider:
                             }
                         )
                         raise YahooInvalidResponseError()
-
+                    
                     return data
 
             except asyncio.TimeoutError as e:

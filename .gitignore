@@ -1,11 +1,25 @@
-datasets/
+# Python
+__pycache__/
+*.py[cod]
 
-logs/
-
-__pycache__
-
+# Environment
 .env
-
 .venv/
 
+# Logs
+logs/
+*.log
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
 notebook/
+
+# Data
+datasets/
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

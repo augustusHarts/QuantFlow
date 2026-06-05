@@ -1,0 +1,11 @@
+datasets/
+
+logs/
+
+__pycache__
+
+.env
+
+.venv/
+
+notebook/

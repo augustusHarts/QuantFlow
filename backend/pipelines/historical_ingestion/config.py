@@ -1,0 +1,2 @@
+
+SYMBOLS = ['AAPL', 'BTC-USD', 'ADBE', 'MSFT']

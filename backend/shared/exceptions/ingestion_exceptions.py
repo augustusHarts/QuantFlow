@@ -9,3 +9,4 @@ class YahooRateLimitError(YahooProviderError):
 
 class YahooInvalidResponseError(YahooProviderError):
     pass
+

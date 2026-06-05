@@ -4,6 +4,7 @@ import logging
 
 from shared.config.ingestion_config import BASE_URL, YAHOO_INTERVAL, YAHOO_RANGE, API_TIMEOUT
 from services.ingestion.interfaces.provider import Provider
+from services.ingestion.validators.yahoo_validator import YahooValidator
 from shared.exceptions.ingestion_exceptions import (
     YahooFetchError,
     YahooRateLimitError,
@@ -14,13 +15,15 @@ class YahooProvider(Provider):
 
     def __init__(
         self,
-        logger: logging.Logger
+        logger: logging.Logger,
+        validator: YahooValidator
     ):
         self.base_url = BASE_URL
         self.range = YAHOO_RANGE
         self.interval = YAHOO_INTERVAL
         self.timeout = API_TIMEOUT
         self.logger = logger
+        self.validator = validator
 
     async def fetch(
         self, 
@@ -54,16 +57,16 @@ class YahooProvider(Provider):
                     response.raise_for_status()
                     data = await response.json()
 
-                    chart = data.get('chart', {})
+                    try:
+                        self.validator.validate(data)
 
-                    if not chart.get('result') or chart.get('error') is not None :
+                    except YahooInvalidResponseError:
+
                         self.logger.error(
-                            'invalid_response',
-                            extra={
-                                'symbol': symbol
-                            }
+                            "invalid_response for symbol: %d", symbol
                         )
-                        raise YahooInvalidResponseError()
+
+                        raise
                     
                     return data
 

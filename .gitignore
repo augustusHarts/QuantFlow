@@ -23,3 +23,7 @@ datasets/
 # OS files
 .DS_Store
 Thumbs.db
+
+# pytest.ini
+[pytest]
+asyncio_mode = auto

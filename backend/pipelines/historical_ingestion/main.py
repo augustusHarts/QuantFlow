@@ -2,6 +2,7 @@ import asyncio
 
 from shared.utils.logger import get_logger
 from pipelines.historical_ingestion.config import SYMBOLS
+from shared.config.storage_config import DATASET_DIR
 from shared.config.ingestion_config import (
     BASE_URL,
     YAHOO_RANGE,
@@ -12,8 +13,7 @@ from shared.models.ingestion_models import YahooConfig
 from services.ingestion.providers.yahoo_provider import YahooProvider
 from services.ingestion.validators.yahoo_validator import YahooValidator
 from services.ingestion.processors.yahoo_processor import YahooProcessor
-from services.preprocessing.yahoo_preprocessor import YahooPreprocessor
-from services.transformation.yahoo_transformer import YahooTransformer
+from storage.repositories.data_repository import DataRepository
 from pipelines.historical_ingestion.pipeline import HistoricalIngestion
 from shared.enums.datasource import DataSource
 
@@ -35,16 +35,14 @@ async def main():
         config=yahoo_config
     )
     processor = YahooProcessor(pipeline_logger.getChild('YahooProcessor'))
-    preprocessor = YahooPreprocessor(pipeline_logger.getChild('YahooPreprocessor'))
-    transformer = YahooTransformer(pipeline_logger.getChild('YahooTransformer'))
+    repository = DataRepository(root_dir=DATASET_DIR)
     
     pipeline = HistoricalIngestion(
         SYMBOLS,
         pipeline_logger,
         provider = provider,
         processor = processor,  
-        preprocessor=preprocessor,
-        transformer = transformer
+        repository=repository
     )
     
     await pipeline.run()

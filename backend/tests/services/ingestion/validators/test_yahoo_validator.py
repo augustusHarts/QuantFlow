@@ -433,3 +433,156 @@ def test_adjclose_invalid_type(
         match="adjclose contains invalid values"
     ):
         validator.validate(payload)
+
+# --------------------------------------------------
+# Valid Edge Cases
+# --------------------------------------------------
+def test_timestamp_allows_none(
+    validator,
+    valid_payload
+):
+    payload = deepcopy(valid_payload)
+
+    payload["chart"]["result"][0]["timestamp"] = [
+        1,
+        None,
+        3
+    ]
+
+    validator.validate(payload)
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "open",
+        "high",
+        "low",
+        "close"
+    ]
+)
+def test_price_field_allows_none(
+    validator,
+    valid_payload,
+    field
+):
+    payload = deepcopy(valid_payload)
+
+    payload["chart"]["result"][0]["indicators"]["quote"][0][field] = [
+        1.0,
+        None,
+        3.0
+    ]
+
+    validator.validate(payload)
+
+def test_volume_allows_none(
+    validator,
+    valid_payload
+):
+    payload = deepcopy(valid_payload)
+
+    payload["chart"]["result"][0]["indicators"]["quote"][0]["volume"] = [
+        100,
+        None,
+        300
+    ]
+
+    validator.validate(payload)
+
+def test_adjclose_allows_none(
+    validator,
+    valid_payload
+):
+    payload = deepcopy(valid_payload)
+
+    payload["chart"]["result"][0]["indicators"]["adjclose"] = [
+        {
+            "adjclose": [
+                1.0,
+                None,
+                3.0
+            ]
+        }
+    ]
+
+    validator.validate(payload)
+
+# --------------------------------------------------
+# Quote Edge Cases
+# --------------------------------------------------
+def test_quote_empty_list(
+    validator,
+    valid_payload
+):
+    payload = deepcopy(valid_payload)
+
+    payload["chart"]["result"][0]["indicators"]["quote"] = []
+
+    with pytest.raises(
+        YahooInvalidResponseError,
+        match="Quote must be a non-empty list"
+    ):
+        validator.validate(payload)
+
+def test_empty_quote_dictionary(
+    validator,
+    valid_payload
+):
+    payload = deepcopy(valid_payload)
+
+    payload["chart"]["result"][0]["indicators"]["quote"] = [
+        {}
+    ]
+
+    with pytest.raises(
+        YahooInvalidResponseError,
+        match="open is missing"
+    ):
+        validator.validate(payload)
+
+# --------------------------------------------------
+# Adjclose Edge Cases
+# --------------------------------------------------
+def test_adjclose_empty_list(
+    validator,
+    valid_payload
+):
+    payload = deepcopy(valid_payload)
+
+    payload["chart"]["result"][0]["indicators"]["adjclose"] = []
+
+    with pytest.raises(
+        YahooInvalidResponseError,
+        match="Missing adjclose"
+    ):
+        validator.validate(payload)
+        
+def test_adjclose_missing_values(
+    validator,
+    valid_payload
+):
+    payload = deepcopy(valid_payload)
+
+    payload["chart"]["result"][0]["indicators"]["adjclose"] = [
+        {}
+    ]
+
+    with pytest.raises(
+        YahooInvalidResponseError,
+        match="adjclose must be a list"
+    ):
+        validator.validate(payload)
+
+def test_volume_zero_allowed(
+    validator,
+    valid_payload
+):
+    payload = deepcopy(valid_payload)
+
+    payload["chart"]["result"][0]["indicators"]["quote"][0]["volume"] = [
+        0,
+        100,
+        200
+    ]
+
+    validator.validate(payload)

@@ -2,16 +2,16 @@ from shared.exceptions.ingestion_exceptions import (
     YahooInvalidResponseError
 )
 
+from shared.models.ingestion_models import MarketSymbol
+from shared.enums.assettype import AssetType
+
 # --------------------------------------------------
 # Success
 # --------------------------------------------------
-def test_all_successful(processor):
-
-    symbols = [
-        "AAPL",
-        "MSFT"
-    ]
-
+def test_all_successful(
+    processor,
+    symbols
+):
     results = [
         {"price": 100},
         {"price": 200}
@@ -31,13 +31,10 @@ def test_all_successful(processor):
 # --------------------------------------------------
 # Failures
 # --------------------------------------------------
-def test_all_failed(processor):
-
-    symbols = [
-        "AAPL",
-        "MSFT"
-    ]
-
+def test_all_failed(
+    processor,
+    symbols
+):
     results = [
         YahooInvalidResponseError("bad"),
         YahooInvalidResponseError("bad")
@@ -64,14 +61,25 @@ def test_all_failed(processor):
 # --------------------------------------------------
 # Mixed
 # --------------------------------------------------
-def test_mixed_results(processor):
-
+def test_mixed_results(
+    processor,
+    symbols
+):
     symbols = [
-        "AAPL",
-        "MSFT",
-        "GOOG"
+        MarketSymbol(
+            ticker="AAPL",
+            asset_type=AssetType.EQUITY
+        ),
+        MarketSymbol(
+            ticker="MSFT",
+            asset_type=AssetType.EQUITY
+        ),
+        MarketSymbol(
+            ticker="GOOG",
+            asset_type=AssetType.EQUITY
+        )
     ]
-
+    
     results = [
         {"price": 100},
         YahooInvalidResponseError("bad"),
@@ -109,11 +117,15 @@ def test_empty_input(processor):
 # --------------------------------------------------
 def test_logs_failure(
     processor,
-    caplog
+    caplog,
+    symbols
 ):
-
-    symbols = ["AAPL"]
-
+    symbols = [
+        MarketSymbol(
+            ticker="AAPL",
+            asset_type=AssetType.EQUITY
+        )
+    ]
     results = [
         YahooInvalidResponseError("bad")
     ]

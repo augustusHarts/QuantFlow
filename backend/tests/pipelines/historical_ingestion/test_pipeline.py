@@ -1,222 +1,203 @@
-# import pytest
-# from unittest.mock import (
-#     AsyncMock, 
-#     Mock
-# )
-# from pipelines.historical_ingestion.pipeline import (
-#     HistoricalIngestion
-# )
+import pytest
 
-# # --------------------------------------------------
-# # Success
-# # --------------------------------------------------
-# @pytest.mark.asyncio
-# async def test_run_success(
-#     pipeline,
-#     provider,
-#     processor,
-#     transformer
-# ):
+from shared.models.ingestion_models import (
+    IngestionResult
+)
 
-#     provider.fetch = AsyncMock(
-#         side_effect=[
-#             {"symbol": "AAPL"},
-#             {"symbol": "MSFT"},
-#             {"symbol": "GOOG"}
-#         ]
-#     )
+from shared.enums.pipelinestatus import (
+    PipelineStatus
+)
 
-#     processed = Mock(
-#         successful={
-#             "AAPL": {},
-#             "MSFT": {},
-#             "GOOG": {}
-#         },
-#         failed={}
-#     )
+from pipelines.historical_ingestion.pipeline import (
+    HistoricalIngestion
+)
 
-#     processor.process.return_value = processed
 
-#     transformer.transform.return_value = (
-#         "transformed_data"
-#     )
+# --------------------------------------------------
+# Status
+# --------------------------------------------------
 
-#     result = await pipeline.run()
+def test_status_success():
 
-#     assert result == "transformed_data"
+    status = HistoricalIngestion._get_pipeline_status(
+        successful_count=2,
+        failed_count=0
+    )
 
-# # --------------------------------------------------
-# # Provider - All symbols
-# # --------------------------------------------------
-# @pytest.mark.asyncio
-# async def test_calls_provider_for_each_symbol(
-#     pipeline,
-#     provider,
-#     symbols
-# ):
+    assert status == PipelineStatus.SUCCESS
 
-#     provider.fetch = AsyncMock(
-#         return_value={}
-#     )
 
-#     pipeline.processor.process.return_value = Mock(
-#         successful={},
-#         failed={}
-#     )
+def test_status_failed():
 
-#     pipeline.transformer.transform.return_value = {}
+    status = HistoricalIngestion._get_pipeline_status(
+        successful_count=0,
+        failed_count=2
+    )
 
-#     await pipeline.run()
+    assert status == PipelineStatus.FAILED
 
-#     assert provider.fetch.call_count == len(symbols)
 
-# # --------------------------------------------------
-# # Processor
-# # --------------------------------------------------
-# @pytest.mark.asyncio
-# async def test_processor_called(
-#     pipeline,
-#     provider,
-#     processor
-# ):
+def test_status_partial_success():
 
-#     provider.fetch = AsyncMock(
-#         side_effect=[
-#             {"AAPL": 1},
-#             {"MSFT": 2},
-#             {"GOOG": 3}
-#         ]
-#     )
+    status = HistoricalIngestion._get_pipeline_status(
+        successful_count=1,
+        failed_count=1
+    )
 
-#     processor.process.return_value = Mock(
-#         successful={},
-#         failed={}
-#     )
+    assert status == PipelineStatus.PARTIAL_SUCCESS
 
-#     pipeline.transformer.transform.return_value = {}
 
-#     await pipeline.run()
+# --------------------------------------------------
+# Persistence
+# --------------------------------------------------
 
-#     processor.process.assert_called_once()
+def test_persist_raw_data(
+    pipeline,
+    repository
+):
 
-# # --------------------------------------------------
-# # Transformation
-# # --------------------------------------------------
-# @pytest.mark.asyncio
-# async def test_transformer_called(
-#     pipeline,
-#     provider,
-#     processor,
-#     transformer
-# ):
+    pipeline._persist_raw_data(
+        {
+            "AAPL": {"price": 100},
+            "MSFT": {"price": 200}
+        }
+    )
 
-#     provider.fetch = AsyncMock(
-#         return_value={}
-#     )
+    assert repository.save.call_count == 2
 
-#     processed = Mock(
-#         successful={},
-#         failed={}
-#     )
 
-#     processor.process.return_value = processed
+# --------------------------------------------------
+# Empty Symbols
+# --------------------------------------------------
 
-#     transformer.transform.return_value = {}
+@pytest.mark.asyncio
+async def test_empty_symbols(
+    logger,
+    provider,
+    processor,
+    repository
+):
 
-#     await pipeline.run()
+    pipeline = HistoricalIngestion(
+        symbols=[],
+        logger=logger,
+        provider=provider,
+        processor=processor,
+        repository=repository
+    )
 
-#     transformer.transform.assert_called_once_with(
-#         processed
-#     )
+    result = await pipeline.run()
 
-# # --------------------------------------------------
-# # 
-# # --------------------------------------------------
-# @pytest.mark.asyncio
-# async def test_provider_exception_passed_to_processor(
-#     pipeline,
-#     provider,
-#     processor
-# ):
+    assert result == IngestionResult(
+        successful={},
+        failed={}
+    )
 
-#     provider.fetch = AsyncMock(
-#         side_effect=[
-#             Exception("AAPL failed"),
-#             {"MSFT": 1},
-#             {"GOOG": 2}
-#         ]
-#     )
+    logger.warning.assert_called_once()
 
-#     processor.process.return_value = Mock(
-#         successful={},
-#         failed={}
-#     )
 
-#     pipeline.transformer.transform.return_value = {}
+# --------------------------------------------------
+# Successful Run
+# --------------------------------------------------
 
-#     await pipeline.run()
+@pytest.mark.asyncio
+async def test_run_success(
+    pipeline,
+    processor,
+    successful_result,
+    repository
+):
 
-#     args = processor.process.call_args[0]
+    processor.process.return_value = successful_result
 
-#     results = args[1]
+    result = await pipeline.run()
 
-#     assert isinstance(
-#         results[0],
-#         Exception
-#     )
+    assert result == successful_result
 
-# # --------------------------------------------------
-# # Empty Symbols
-# # --------------------------------------------------
-# @pytest.mark.asyncio
-# async def test_empty_symbols(
-#     logger,
-#     provider,
-#     processor,
-#     transformer
-# ):
+    assert (
+        pipeline.status
+        == PipelineStatus.SUCCESS
+    )
 
-#     pipeline = HistoricalIngestion(
-#         symbols=[],
-#         logger=logger,
-#         provider=provider,
-#         processor=processor,
-#         transformer=transformer
-#     )
+    processor.process.assert_called_once()
 
-#     processor.process.return_value = Mock(
-#         successful={},
-#         failed={}
-#     )
+    assert repository.save.call_count == 2
 
-#     transformer.transform.return_value = {}
 
-#     result = await pipeline.run()
+# --------------------------------------------------
+# Partial Success
+# --------------------------------------------------
 
-#     assert result == {}
+@pytest.mark.asyncio
+async def test_run_partial_success(
+    pipeline,
+    processor,
+    partial_result
+):
 
-# # --------------------------------------------------
-# # Logging
-# # --------------------------------------------------
-# @pytest.mark.asyncio
-# async def test_completion_logged(
-#     pipeline,
-#     provider,
-#     processor,
-#     caplog
-# ):
+    processor.process.return_value = partial_result
 
-#     provider.fetch = AsyncMock(
-#         return_value={}
-#     )
+    await pipeline.run()
 
-#     processor.process.return_value = Mock(
-#         successful={"AAPL": {}},
-#         failed={}
-#     )
+    assert (
+        pipeline.status
+        == PipelineStatus.PARTIAL_SUCCESS
+    )
 
-#     pipeline.transformer.transform.return_value = {}
 
-#     await pipeline.run()
+# --------------------------------------------------
+# Failed Run
+# --------------------------------------------------
 
-#     assert "Ingestion Completed" in caplog.text
+@pytest.mark.asyncio
+async def test_run_failed(
+    pipeline,
+    processor,
+    failed_result
+):
+
+    processor.process.return_value = failed_result
+
+    await pipeline.run()
+
+    assert (
+        pipeline.status
+        == PipelineStatus.FAILED
+    )
+
+
+# --------------------------------------------------
+# Provider Called For Each Symbol
+# --------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_provider_called_for_each_symbol(
+    pipeline,
+    provider,
+    processor,
+    successful_result
+):
+
+    processor.process.return_value = successful_result
+
+    await pipeline.run()
+
+    assert provider.fetch.call_count == 2
+
+
+# --------------------------------------------------
+# Processor Receives Results
+# --------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_processor_called(
+    pipeline,
+    processor,
+    successful_result
+):
+
+    processor.process.return_value = successful_result
+
+    await pipeline.run()
+
+    processor.process.assert_called_once()

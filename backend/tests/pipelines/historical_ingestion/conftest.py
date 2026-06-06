@@ -1,48 +1,115 @@
-import logging
 import pytest
 
-from unittest.mock import Mock
+from unittest.mock import (
+    Mock,
+    AsyncMock
+)
 
 from pipelines.historical_ingestion.pipeline import (
     HistoricalIngestion
 )
 
+from shared.models.ingestion_models import (
+    MarketSymbol,
+    IngestionResult
+)
+
+from shared.enums.assettype import AssetType
+from shared.enums.datasource import DataSource
+
+
 @pytest.fixture
 def logger():
-    return logging.getLogger("test")
+    return Mock()
+
 
 @pytest.fixture
 def provider():
-    return Mock()
+
+    provider = Mock()
+
+    provider.source = DataSource.YAHOO
+
+    provider.fetch = AsyncMock()
+
+    return provider
+
 
 @pytest.fixture
 def processor():
     return Mock()
 
+
 @pytest.fixture
-def transformer():
+def repository():
     return Mock()
+
 
 @pytest.fixture
 def symbols():
+
     return [
-        "AAPL",
-        "MSFT",
-        "GOOG"
+        MarketSymbol(
+            ticker="AAPL",
+            asset_type=AssetType.EQUITY
+        ),
+        MarketSymbol(
+            ticker="MSFT",
+            asset_type=AssetType.EQUITY
+        )
     ]
+
+
+@pytest.fixture
+def successful_result():
+
+    return IngestionResult(
+        successful={
+            "AAPL": {"price": 100},
+            "MSFT": {"price": 200}
+        },
+        failed={}
+    )
+
+
+@pytest.fixture
+def partial_result():
+
+    return IngestionResult(
+        successful={
+            "AAPL": {"price": 100}
+        },
+        failed={
+            "MSFT": Exception("bad")
+        }
+    )
+
+
+@pytest.fixture
+def failed_result():
+
+    return IngestionResult(
+        successful={},
+        failed={
+            "AAPL": Exception("bad"),
+            "MSFT": Exception("bad")
+        }
+    )
+
 
 @pytest.fixture
 def pipeline(
-    symbols,
     logger,
     provider,
     processor,
-    transformer
+    repository,
+    symbols
 ):
+
     return HistoricalIngestion(
         symbols=symbols,
         logger=logger,
         provider=provider,
         processor=processor,
-        transformer=transformer
+        repository=repository
     )

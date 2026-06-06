@@ -4,7 +4,12 @@ from shared.enums.datasource import DataSource
 
 class Provider(ABC):
 
-    source = DataSource
+    @property
+    @abstractmethod
+    def source(
+        self
+    ) -> DataSource:
+        ...
 
     @abstractmethod
     async def fetch(

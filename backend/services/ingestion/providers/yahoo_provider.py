@@ -14,13 +14,16 @@ from services.ingestion.interfaces.provider import Provider
 from services.ingestion.validators.yahoo_validator import YahooValidator
 from shared.models.ingestion_models import YahooConfig
 from shared.enums.datasource import DataSource
+from shared.models.ingestion_models import MarketSymbol
 from shared.exceptions.ingestion_exceptions import (
     YahooRateLimitError
 )
 
 class YahooProvider(Provider):
 
-    source = DataSource.YAHOO
+    @property
+    def source(self) -> DataSource:
+        return DataSource.YAHOO
 
     def __init__(
         self,

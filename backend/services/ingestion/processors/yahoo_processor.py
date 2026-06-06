@@ -35,13 +35,6 @@ class YahooProcessor(Processor):
 
             else:
                 successful[symbol.ticker] = result
-
-        # self.logger.info(
-        #     'Processing  Summmary | requested=%d | successful=%d | failed=%d',
-        #     len(symbols), 
-        #     len(successful), 
-        #     len(failed)
-        # )
     
         return IngestionResult(
             successful=successful,

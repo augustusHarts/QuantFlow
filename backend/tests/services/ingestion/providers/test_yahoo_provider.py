@@ -5,11 +5,11 @@ from shared.exceptions.ingestion_exceptions import (
     YahooInvalidResponseError
 )
 from aiohttp import ClientResponseError
-from unittest.mock import (
-    AsyncMock, 
-    patch, 
-    Mock
+from unittest.mock import Mock
+from shared.config.ingestion_config import (
+    DEFAULT_HEADERS
 )
+from shared.enums.datasource import DataSource
 
 class MockResponse:
 
@@ -102,10 +102,6 @@ async def test_invalid_response(
     validator
 ):
 
-    payload = {
-        "chart": {}
-    }
-
     validator.validate.side_effect = (
         YahooInvalidResponseError(
             "bad payload"
@@ -116,7 +112,7 @@ async def test_invalid_response(
 
     session.get.return_value = MockResponse(
         status=200,
-        json_data=payload
+        json_data={}
     )
 
     with pytest.raises(
@@ -141,21 +137,16 @@ async def test_timeout_retries(
         asyncio.TimeoutError()
     )
 
-    with patch(
-        "asyncio.sleep",
-        new_callable=AsyncMock
+    with pytest.raises(
+        asyncio.TimeoutError
     ):
-
-        with pytest.raises(
-            asyncio.TimeoutError
-        ):
-            await provider.fetch(
-                "AAPL",
-                session
-            )
+        await provider.fetch(
+            "AAPL",
+            session
+        )
 
 # --------------------------------------------------
-# Timeout Retries
+# HTTP Error
 # --------------------------------------------------
 class MockHttpErrorResponse(
     MockResponse
@@ -189,37 +180,55 @@ async def test_http_error(
         )
 
 # --------------------------------------------------
-# Logger Verification
+# Build Parameter
 # --------------------------------------------------
-@pytest.mark.asyncio
-async def test_invalid_response_logged(
-    provider,
-    validator,
-    caplog
+def test_build_params(
+    provider
 ):
 
-    validator.validate.side_effect = (
-        YahooInvalidResponseError(
-            "bad payload"
-        )
-    )
+    params = provider._build_params()
 
-    session = Mock()
+    assert params == {
+        "range": "1y",
+        "interval": "1d"
+    }
 
-    session.get.return_value = MockResponse(
-        status=200,
-        json_data={}
-    )
+# --------------------------------------------------
+# Build Header
+# --------------------------------------------------
+def test_build_headers(
+    provider
+):
 
-    with pytest.raises(
-        YahooInvalidResponseError
-    ):
-        await provider.fetch(
-            "AAPL",
-            session
-        )
+    headers = provider._build_headers()
 
-    assert (
-        "Data from Yahoo Finance API is invalid"
-        in caplog.text
-    )
+    assert "User-Agent" in headers
+
+def test_source(
+    provider
+):
+    assert provider.source == DataSource.YAHOO
+
+def test_provider_configuration(
+    provider,
+    config
+):
+    assert provider.config == config
+
+def test_build_headers_returns_copy(
+    provider
+):
+    headers = provider._build_headers()
+
+    assert headers == DEFAULT_HEADERS
+
+    assert headers is not DEFAULT_HEADERS
+
+def test_build_params_uses_config(
+    provider,
+    config
+):
+    params = provider._build_params()
+
+    assert params["range"] == config.range
+    assert params["interval"] == config.interval

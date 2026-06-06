@@ -1,8 +1,9 @@
 from dataclasses import dataclass
-from datetime import datetime
+from typing import Any
 from aiohttp import ClientTimeout
 from shared.enums.datasource import DataSource
 from shared.enums.assettype import AssetType
+from shared.enums.datalayer import DataLayer
 
 @dataclass
 class IngestionResult:
@@ -22,13 +23,9 @@ class MarketSymbol:
     ticker: str
     asset_type: AssetType
 
-@dataclass
-class HistoricalPrice:
-    symbol: str
-    asset_type: AssetType
-    timestamp: datetime
-    open: float
-    high: float
-    low: float
-    close: float
-    volume: int
+@dataclass(slots=True)
+class SaveRequest:
+    layer: DataLayer
+    provider: DataSource
+    key: str
+    payload: dict[str, Any]

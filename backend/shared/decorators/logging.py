@@ -1,7 +1,6 @@
 from functools import wraps
 import inspect
 import time
-from shared.utils.logger import get_logger
 
 
 def log_stage(name=None):

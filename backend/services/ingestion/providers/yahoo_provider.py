@@ -1,7 +1,7 @@
 import asyncio
 import aiohttp
 import logging 
-from typing import Any, Final
+from typing import Any
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -14,7 +14,6 @@ from services.ingestion.interfaces.provider import Provider
 from services.ingestion.validators.yahoo_validator import YahooValidator
 from shared.models.ingestion_models import YahooConfig
 from shared.enums.datasource import DataSource
-from shared.models.ingestion_models import MarketSymbol
 from shared.exceptions.ingestion_exceptions import (
     YahooRateLimitError
 )

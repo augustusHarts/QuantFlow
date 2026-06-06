@@ -1,5 +1,4 @@
 from aiohttp import ClientTimeout
-from pathlib import Path
 from typing import Final
 
 BASE_URL = 'https://query1.finance.yahoo.com/v8/finance/chart'

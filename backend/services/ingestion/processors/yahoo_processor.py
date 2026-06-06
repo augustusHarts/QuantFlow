@@ -3,7 +3,7 @@ from typing import Any
 from shared.decorators.logging import log_stage
 from shared.models.ingestion_models import IngestionResult
 from services.ingestion.interfaces.processor import Processor
-
+from shared.models.ingestion_models import MarketSymbol
 
 class YahooProcessor(Processor):
 
@@ -13,7 +13,7 @@ class YahooProcessor(Processor):
     @log_stage("Processing Results")
     def process(
         self,
-        symbols: list[str],
+        symbols: list[MarketSymbol],
         results: list[dict[str, Any] | BaseException]
     ) -> IngestionResult:
 
@@ -24,26 +24,24 @@ class YahooProcessor(Processor):
 
             if isinstance(result, BaseException):
 
-                failed[symbol] = result
+                failed[symbol.ticker] = result
 
                 self.logger.error(
-                    "Symbol Ingestion Failed: \n\tsymbol: %s \n\texception: %s \n\tmessage: %s",
+                    "Symbol Ingestion Failed | symbol=%s | exception=%s | message=%s",
                     symbol,
                     type(result).__name__,
                     str(result)
                 )
 
             else:
+                successful[symbol.ticker] = result
 
-                successful[symbol] = result
-
-
-        self.logger.info(
-            'Ingestion Summmary: \n\trequested: %d \n\tsuccessful: %d \n\tfailed: %d', 
-            len(symbols), 
-            len(successful), 
-            len(failed)
-        )
+        # self.logger.info(
+        #     'Processing  Summmary | requested=%d | successful=%d | failed=%d',
+        #     len(symbols), 
+        #     len(successful), 
+        #     len(failed)
+        # )
     
         return IngestionResult(
             successful=successful,

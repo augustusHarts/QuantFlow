@@ -15,6 +15,7 @@ from services.ingestion.processors.yahoo_processor import YahooProcessor
 from services.preprocessing.yahoo_preprocessor import YahooPreprocessor
 from services.transformation.yahoo_transformer import YahooTransformer
 from pipelines.historical_ingestion.pipeline import HistoricalIngestion
+from shared.enums.datasource import DataSource
 
 async def main():
 
@@ -24,7 +25,8 @@ async def main():
         base_url=BASE_URL,
         range=YAHOO_RANGE,
         interval=YAHOO_INTERVAL,
-        timeout=API_TIMEOUT
+        timeout=API_TIMEOUT,
+        source=DataSource.YAHOO
     )
     
     provider = YahooProvider(

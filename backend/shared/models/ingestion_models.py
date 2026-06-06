@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 from aiohttp import ClientTimeout
+from shared.enums.datasource import DataSource
+from shared.enums.assettype import AssetType
 
 @dataclass
 class IngestionResult:
@@ -13,10 +15,17 @@ class YahooConfig:
     interval: str
     range: str
     timeout: ClientTimeout
+    source: DataSource = DataSource.YAHOO
+
+@dataclass(frozen=True, slots=True)
+class MarketSymbol:
+    ticker: str
+    asset_type: AssetType
 
 @dataclass
 class HistoricalPrice:
     symbol: str
+    asset_type: AssetType
     timestamp: datetime
     open: float
     high: float

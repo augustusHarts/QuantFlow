@@ -1,5 +1,3 @@
-# services/ingestion/processor/yahoo_processor.py
-
 from typing import Any
 
 from shared.decorators.logging import log_stage
@@ -29,12 +27,10 @@ class YahooProcessor(Processor):
                 failed[symbol] = result
 
                 self.logger.error(
-                    "symbol_ingestion_failed",
-                    extra={
-                        "symbol": symbol,
-                        "exception": type(result).__name__,
-                        "message": str(result)
-                    }
+                    "Symbol Ingestion Failed: \n\tsymbol: %s \n\texception: %s \n\tmessage: %s",
+                    symbol,
+                    type(result).__name__,
+                    str(result)
                 )
 
             else:

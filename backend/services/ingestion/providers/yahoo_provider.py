@@ -1,14 +1,20 @@
 import asyncio
 import aiohttp
 import logging 
+from typing import Any, Final
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type
+)
 
-from shared.config.ingestion_config import BASE_URL, YAHOO_INTERVAL, YAHOO_RANGE, API_TIMEOUT
+from shared.config.ingestion_config import DEFAULT_HEADERS 
 from services.ingestion.interfaces.provider import Provider
 from services.ingestion.validators.yahoo_validator import YahooValidator
+from shared.models.ingestion_models import YahooConfig
 from shared.exceptions.ingestion_exceptions import (
-    YahooFetchError,
-    YahooRateLimitError,
-    YahooInvalidResponseError
+    YahooRateLimitError
 )
 
 class YahooProvider(Provider):
@@ -16,84 +22,59 @@ class YahooProvider(Provider):
     def __init__(
         self,
         logger: logging.Logger,
-        validator: YahooValidator
+        validator: YahooValidator,
+        config: YahooConfig
     ):
-        self.base_url = BASE_URL
-        self.range = YAHOO_RANGE
-        self.interval = YAHOO_INTERVAL
-        self.timeout = API_TIMEOUT
         self.logger = logger
         self.validator = validator
+        self.config = config
 
+    def _build_params(self) -> dict[str, str]:
+        return {
+            'range': self.config.range,
+            'interval': self.config.interval
+        }
+
+    def _build_headers(self) -> dict[str, str]:
+        return DEFAULT_HEADERS.copy()
+        
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(
+            multiplier=1,
+            min=2,
+            max=10
+        ),
+        retry=retry_if_exception_type(
+           (
+               asyncio.TimeoutError,
+                aiohttp.ClientError,
+            )
+        ),
+        reraise=True
+    )
     async def fetch(
         self, 
         symbol: str, 
         session: aiohttp.ClientSession
-    ):
+    ) -> dict[str, Any]:
 
-        url = f'{self.base_url}/{symbol}'
-        params = {
-            'range': self.range,
-            'interval': self.interval
-        }
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/58.0.3029.110'}
-        retries = 3
-        base_backoff = 2
+        url = f'{self.config.base_url}/{symbol}'
 
-        for attempt in range(1, retries+1):
-            
-            try:
-                async with session.get(
-                    url, 
-                    params=params, 
-                    headers=headers, 
-                    timeout=self.timeout
-                ) as response:
-                    
-                    if response.status == 429:
-                        self.logger.error('Ingestion Stage: Rate Limit Exceeded (429)')
-                        raise YahooRateLimitError() 
-                    
-                    response.raise_for_status()
-                    data = await response.json()
+        async with session.get(
+            url,
+            params=self._build_params(),
+            headers=self._build_headers(),
+            timeout=self.config.timeout
+        ) as response:
 
-                    try:
-                        self.validator.validate(data)
+            if response.status == 429:
+                raise YahooRateLimitError() 
 
-                    except YahooInvalidResponseError:
+            response.raise_for_status()
 
-                        self.logger.error(
-                            "invalid_response for symbol: %d", symbol
-                        )
+            data = await response.json()
 
-                        raise
-                    
-                    return data
+            self.validator.validate(data)
 
-            except asyncio.TimeoutError as e:
-                self.logger.error(
-                    'request_timeout',
-                    extra={
-                        'error': str(e)
-                    }
-                )
-
-                if attempt < retries:
-                    self.logger.info(
-                        'retry_scheduled', 
-                        extra={
-                            'attempts': attempt,
-                            'delay_seconds': base_backoff ** attempt
-                        }
-                    ) 
-                    await asyncio.sleep(base_backoff ** attempt)
-
-                else:
-                    self.logger.error('Ingestion Stage: Max retries reached')
-                    raise 
-
-            except YahooInvalidResponseError:
-                self.logger.error('Data from Yahoo Finance API is invalid')
-                raise 
-
-        raise YahooFetchError()
+            return data

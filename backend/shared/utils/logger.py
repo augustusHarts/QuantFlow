@@ -1,6 +1,6 @@
 import logging
 
-from shared.config.config import LOG_DIR,LOG_FORMAT, DATE_FORMAT
+from shared.config.backend_config import LOG_DIR,LOG_FORMAT, DATE_FORMAT
 
 def get_logger(
     name:str,

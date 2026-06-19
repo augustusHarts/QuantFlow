@@ -11,7 +11,7 @@ from pipelines.historical_ingestion.pipeline import (
 
 from shared.models.ingestion_models import (
     MarketSymbol,
-    IngestionResult
+    Result
 )
 
 from shared.enums.assettype import AssetType
@@ -63,7 +63,7 @@ def symbols():
 @pytest.fixture
 def successful_result():
 
-    return IngestionResult(
+    return Result(
         successful={
             "AAPL": {"price": 100},
             "MSFT": {"price": 200}
@@ -75,7 +75,7 @@ def successful_result():
 @pytest.fixture
 def partial_result():
 
-    return IngestionResult(
+    return Result(
         successful={
             "AAPL": {"price": 100}
         },
@@ -88,7 +88,7 @@ def partial_result():
 @pytest.fixture
 def failed_result():
 
-    return IngestionResult(
+    return Result(
         successful={},
         failed={
             "AAPL": Exception("bad"),

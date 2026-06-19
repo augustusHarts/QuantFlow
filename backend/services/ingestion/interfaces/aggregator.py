@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import Any
-from shared.models.ingestion_models import IngestionResult
+from shared.models.ingestion_models import Result
 from shared.models.ingestion_models import MarketSymbol
 
-class Processor(ABC):
+class Aggregator(ABC):
 
     @abstractmethod
-    def process(
+    def aggregate(
         self,
         symbols: list[MarketSymbol],
         results: list[dict[str, Any] | BaseException]
-    ) -> IngestionResult:
+    ) -> Result:
         ...

@@ -1,21 +1,20 @@
 from typing import Any
-
 from shared.decorators.logging import log_stage
-from shared.models.ingestion_models import IngestionResult
-from services.ingestion.interfaces.processor import Processor
+from shared.models.ingestion_models import Result
+from services.ingestion.interfaces.aggregator import Aggregator
 from shared.models.ingestion_models import MarketSymbol
 
-class YahooProcessor(Processor):
+class YahooAggregator(Aggregator):
 
     def __init__(self, logger):
         self.logger = logger
 
-    @log_stage("Processing Results")
-    def process(
+    @log_stage("Aggregating Results")
+    def aggregate(
         self,
         symbols: list[MarketSymbol],
         results: list[dict[str, Any] | BaseException]
-    ) -> IngestionResult:
+    ) -> Result:
 
         successful: dict[str, dict[str, Any]] = {}
         failed: dict[str, BaseException] = {}
@@ -36,7 +35,7 @@ class YahooProcessor(Processor):
             else:
                 successful[symbol.ticker] = result
     
-        return IngestionResult(
+        return Result(
             successful=successful,
             failed=failed
         )

@@ -1,20 +1,19 @@
 from shared.enums.datalayer import DataLayer
-from shared.models.pipeline_model import SaveRequest
+from shared.enums.datasource import DataSource
 from shared.enums.pipelinestatus import PipelineStatus
 from storage.repositories.data_repository import DataRepository
-from services.ingestion.interfaces.provider import Provider
+from shared.models.pipeline_model import SaveRequest
 
-def persist_raw_data(
+def persist_processed_data(
         repository: DataRepository,
-        provider: Provider,
         data: dict
     ) -> None:
         
-        for symbol, payload in data.items():
+        for (provider, symbol), payload in data.items():
             repository.save(
                 SaveRequest(
-                    layer=DataLayer.RAW,
-                    provider=provider.source,
+                    layer=DataLayer.PROCESSED,
+                    provider=provider,
                     key=symbol,
                     payload=payload
                 )
@@ -32,3 +31,11 @@ def get_pipeline_status(
         return PipelineStatus.PARTIAL_SUCCESS
 
     return PipelineStatus.SUCCESS
+
+def get_key_list(
+    repository: DataRepository,
+    layer: DataLayer
+) -> dict[DataSource, list[str]] :
+
+    providers = repository.list_providers(layer)
+    return repository.list_keys(layer, providers)

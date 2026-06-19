@@ -2,8 +2,9 @@ import orjson
 
 from pathlib import Path
 from typing import Any
-from shared.models.ingestion_models import SaveRequest
+from shared.models.pipeline_model import SaveRequest
 from shared.enums.datalayer import DataLayer
+from shared.enums.datasource import DataSource
 from storage.interfaces.repository import Repository
 
 class DataRepository(Repository):
@@ -21,8 +22,8 @@ class DataRepository(Repository):
 
         directory = (
             self.root_dir
-            / request.layer
-            / request.provider.value
+            / request.layer.value
+            / request.provider
         )
 
         directory.mkdir(
@@ -30,29 +31,42 @@ class DataRepository(Repository):
             exist_ok=True
         )
 
-        file_path = directory / f'{request.key}.json'
-
-        with open(
-            file_path,
-            'wb'
-        ) as file:
-            file.write(
-                orjson.dumps(
-                    request.payload,
-                    option=orjson.OPT_INDENT_2
+        if request.layer == DataLayer.RAW:
+            file_path = directory / f'{request.key}.json'
+            with open(
+                file_path,
+                'wb'
+            ) as file:
+                file.write(
+                    orjson.dumps(
+                        request.payload,
+                        option=orjson.OPT_INDENT_2
+                    )
                 )
-            )
+
+        elif request.layer == DataLayer.PROCESSED:
+            file_path = directory / f'{request.key}.json'
+            with open(
+                file_path,
+                'wb'
+            ) as file:
+                file.write(
+                    orjson.dumps(
+                        request.payload,
+                        option=orjson.OPT_INDENT_2
+                    )
+                )
 
     def load(
         self,
         layer: DataLayer,
-        provider: str,
+        provider: DataSource,
         key: str
     ) -> dict[str, Any]:
 
         file_path = (
             self.root_dir
-            / layer
+            / layer.value
             / provider
             / f"{key}.json"
         )
@@ -96,3 +110,58 @@ class DataRepository(Repository):
 
         if file_path.exists():
             file_path.unlink()
+
+    def list_providers(
+        self,
+        layer: DataLayer
+    ) -> list[DataSource]:
+
+        folders = (
+            self.root_dir 
+            / layer
+        )
+
+        if not folders.exists():
+            return []
+
+        providers: list[DataSource] = []
+
+        for item in folders.iterdir():
+            if not item.is_dir():
+                continue
+
+            try:
+                providers.append(
+                    DataSource(
+                        item.name
+                    )
+                )
+                
+            except ValueError:
+                continue
+
+        return providers
+
+    def list_keys(
+        self,
+        layer: DataLayer,
+        providers: list[DataSource]
+    ) -> dict[DataSource, list[str]]:
+
+        result = {}
+        for provider in providers:
+            folder = (
+                self.root_dir
+                / layer
+                / provider.value
+            )
+
+            if not folder.exists():
+                continue
+
+            keys = [file.stem for file in folder.glob('*.json') if file.is_file()]
+
+            result[provider.value] = keys
+            
+        return result
+        

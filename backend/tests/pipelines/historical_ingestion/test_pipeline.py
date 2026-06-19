@@ -1,7 +1,7 @@
 import pytest
 
 from shared.models.ingestion_models import (
-    IngestionResult
+    Result
 )
 
 from shared.enums.pipelinestatus import (
@@ -19,7 +19,7 @@ from pipelines.historical_ingestion.pipeline import (
 
 def test_status_success():
 
-    status = HistoricalIngestion._get_pipeline_status(
+    status = HistoricalIngestion.get_pipeline_status(
         successful_count=2,
         failed_count=0
     )
@@ -29,7 +29,7 @@ def test_status_success():
 
 def test_status_failed():
 
-    status = HistoricalIngestion._get_pipeline_status(
+    status = HistoricalIngestion.get_pipeline_status(
         successful_count=0,
         failed_count=2
     )
@@ -88,7 +88,7 @@ async def test_empty_symbols(
 
     result = await pipeline.run()
 
-    assert result == IngestionResult(
+    assert result == Result(
         successful={},
         failed={}
     )

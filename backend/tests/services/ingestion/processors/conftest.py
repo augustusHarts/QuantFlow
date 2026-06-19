@@ -1,7 +1,7 @@
 import pytest
 import logging
 
-from services.ingestion.processors.yahoo_processor import YahooProcessor
+from services.ingestion.aggregators.yahoo_aggregator import YahooAggregator
 from shared.models.ingestion_models import MarketSymbol
 from shared.enums.assettype import AssetType
 
@@ -13,7 +13,7 @@ def logger():
 
 @pytest.fixture
 def processor(logger):
-    return YahooProcessor(logger)
+    return YahooAggregator(logger)
 
 @pytest.fixture
 def symbols():

@@ -12,10 +12,8 @@ on:
       - develop
 
 jobs:
-
   test:
     name: QuantFlow
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -23,7 +21,6 @@ jobs:
         python-version: ["3.11"]
 
     steps:
-
       - name: Checkout Repository
         uses: actions/checkout@v4
 
@@ -37,15 +34,26 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          
+          pip install pytest pytest-cov ruff mypy deptry
+
       - name: Ruff
         working-directory: backend
         run: |
           ruff check .
+
+      - name: MyPy
+        working-directory: backend
+        run: |
+          mypy .
+
+      - name: Deptry
+        working-directory: backend
+        run: |
+          deptry .
 
       - name: Run Tests
         working-directory: backend
         env:
           PYTHONPATH: .
         run: |
-          pytest -v --cov=. --cov-report=term-missing
+          pytest -v --cov=. --cov-report=term-missing --cov-fail-under=90

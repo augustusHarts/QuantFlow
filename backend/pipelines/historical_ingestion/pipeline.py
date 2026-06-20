@@ -10,72 +10,53 @@ from pipelines.historical_ingestion.tasks import persist_raw_data, get_pipeline_
 from shared.enums.pipelinestatus import PipelineStatus
 from shared.models.ingestion_models import Result
 
-class HistoricalIngestion:
 
+class HistoricalIngestion:
     def __init__(
         self,
         symbols: list[MarketSymbol],
-        logger: Logger ,
+        logger: Logger,
         provider: Provider,
         aggregator: Aggregator,
-        repository: DataRepository
+        repository: DataRepository,
     ):
         self.symbols = symbols
         self.logger = logger
         self.provider = provider
         self.aggregator = aggregator
         self.repository = repository
-        self.status = PipelineStatus.PENDING    
+        self.status = PipelineStatus.PENDING
 
     async def run(self) -> Result:
 
         if not self.symbols:
-            self.logger.warning(
-                "No symbols provided"
-            )
+            self.logger.warning("No symbols provided")
 
-            return Result(
-                successful={},
-                failed={}
-            )
+            return Result(successful={}, failed={})
 
         self.status = PipelineStatus.RUNNING
         self.logger.info(
             "Ingestion Started | source=%s | status=%s | total=%d",
             self.provider.source.value,
             self.status.value,
-            len(self.symbols)
-        )   
+            len(self.symbols),
+        )
 
         async with aiohttp.ClientSession() as session:
             tasks = [
-                self.provider
-                .fetch(
-                    symbol=symbol.ticker, 
-                    session=session
-                )
+                self.provider.fetch(symbol=symbol.ticker, session=session)
                 for symbol in self.symbols
             ]
 
-            results = await asyncio.gather(
-                *tasks,
-                return_exceptions=True
-            )
+            results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        aggregated = self.aggregator.aggregate(
-            self.symbols, 
-            results
-        )
+        aggregated = self.aggregator.aggregate(self.symbols, results)
 
-        persist_raw_data(
-            self.repository, 
-            self.provider, 
-            data=aggregated.successful
-        )
+        persist_raw_data(self.repository, self.provider, data=aggregated.successful)
 
         self.status = get_pipeline_status(
             successful_count=len(aggregated.successful),
-            failed_count=len(aggregated.failed)
+            failed_count=len(aggregated.failed),
         )
 
         self.logger.info(
@@ -84,9 +65,7 @@ class HistoricalIngestion:
             self.status.value,
             len(self.symbols),
             len(aggregated.successful),
-            len(aggregated.failed)
+            len(aggregated.failed),
         )
 
         return aggregated
-
-        

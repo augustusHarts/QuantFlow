@@ -1,80 +1,65 @@
 import asyncio
 import aiohttp
-import logging 
+import logging
 from typing import Any
 from tenacity import (
     retry,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type
+    retry_if_exception_type,
 )
 
-from shared.config.ingestion_config import DEFAULT_HEADERS 
+from shared.config.ingestion_config import DEFAULT_HEADERS
 from services.ingestion.interfaces.provider import Provider
 from services.ingestion.validators.yahoo_validator import YahooValidator
 from shared.models.ingestion_models import YahooConfig
 from shared.enums.datasource import DataSource
-from shared.exceptions.ingestion_exceptions import (
-    YahooRateLimitError
-)
+from shared.exceptions.ingestion_exceptions import YahooRateLimitError
+
 
 class YahooProvider(Provider):
-
     @property
     def source(self) -> DataSource:
         return DataSource.YAHOO
 
     def __init__(
-        self,
-        logger: logging.Logger,
-        validator: YahooValidator,
-        config: YahooConfig
+        self, logger: logging.Logger, validator: YahooValidator, config: YahooConfig
     ):
         self.logger = logger
         self.validator = validator
         self.config = config
 
     def _build_params(self) -> dict[str, str]:
-        return {
-            'range': self.config.range,
-            'interval': self.config.interval
-        }
+        return {"range": self.config.range, "interval": self.config.interval}
 
     def _build_headers(self) -> dict[str, str]:
         return DEFAULT_HEADERS.copy()
-        
+
     @retry(
         stop=stop_after_attempt(3),
-        wait=wait_exponential(
-            multiplier=1,
-            min=2,
-            max=10
-        ),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type(
-           (
-               asyncio.TimeoutError,
+            (
+                asyncio.TimeoutError,
                 aiohttp.ClientError,
             )
         ),
-        reraise=True
+        reraise=True,
     )
     async def fetch(
-        self, 
-        symbol: str, 
-        session: aiohttp.ClientSession
+        self, symbol: str, session: aiohttp.ClientSession
     ) -> dict[str, Any]:
 
-        url = f'{self.config.base_url}/{symbol}'
+        url = f"{self.config.base_url}/{symbol}"
 
         async with session.get(
             url,
             params=self._build_params(),
             headers=self._build_headers(),
-            timeout=self.config.timeout
+            timeout=self.config.timeout,
         ) as response:
-
             if response.status == 429:
-                raise YahooRateLimitError() 
+                raise YahooRateLimitError()
 
             response.raise_for_status()
 

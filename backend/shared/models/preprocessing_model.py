@@ -4,11 +4,12 @@ from shared.enums.assettype import AssetType
 from shared.enums.datasource import DataSource
 from shared.enums.datalayer import DataLayer
 
+
 @dataclass(slots=True)
 class SaveRequest:
     layer: DataLayer
     provider: DataSource
-    
+
 
 @dataclass(slots=True)
 class PriceRecord:
@@ -20,6 +21,7 @@ class PriceRecord:
     adj_close: float | None
     volume: int | None
 
+
 @dataclass(slots=True)
 class MetaData:
     symbol: str
@@ -29,10 +31,12 @@ class MetaData:
     timezone: str
     source: DataSource
 
+
 @dataclass(slots=True)
 class PreprocessedSymbol:
     meta: MetaData
     records: list[PriceRecord]
+
 
 @dataclass(slots=True)
 class PreprocessingResult:

@@ -1,5 +1,6 @@
 from enum import StrEnum
 
+
 class PipelineStatus(StrEnum):
     PENDING = "pending"
     RUNNING = "running"

@@ -29,18 +29,10 @@ def config():
         range="1y",
         interval="1d",
         timeout=ClientTimeout(total=20),
-        source=DataSource.YAHOO
+        source=DataSource.YAHOO,
     )
 
 
 @pytest.fixture
-def provider(
-    logger,
-    validator,
-    config
-):
-    return YahooProvider(
-        logger=logger,
-        validator=validator,
-        config=config
-    )
+def provider(logger, validator, config):
+    return YahooProvider(logger=logger, validator=validator, config=config)

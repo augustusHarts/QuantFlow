@@ -12,19 +12,14 @@ def logger():
 
 
 @pytest.fixture
-def processor(logger):
+def aggregator(logger):
     return YahooAggregator(logger)
+
 
 @pytest.fixture
 def symbols():
 
     return [
-        MarketSymbol(
-            ticker="AAPL",
-            asset_type=AssetType.EQUITY
-        ),
-        MarketSymbol(
-            ticker="MSFT",
-            asset_type=AssetType.EQUITY
-        )
+        MarketSymbol(ticker="AAPL", asset_type=AssetType.EQUITY),
+        MarketSymbol(ticker="MSFT", asset_type=AssetType.EQUITY),
     ]

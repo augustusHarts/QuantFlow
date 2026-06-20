@@ -1,48 +1,36 @@
 import pytest
 
-from shared.models.ingestion_models import (
-    Result
-)
+from shared.models.ingestion_models import Result
 
-from shared.enums.pipelinestatus import (
-    PipelineStatus
-)
+from shared.enums.pipelinestatus import PipelineStatus
 
-from pipelines.historical_ingestion.pipeline import (
-    HistoricalIngestion
-)
+from pipelines.historical_ingestion.pipeline import HistoricalIngestion
+
+from pipelines.historical_ingestion.tasks import get_pipeline_status
 
 
 # --------------------------------------------------
 # Status
 # --------------------------------------------------
 
+
 def test_status_success():
 
-    status = HistoricalIngestion.get_pipeline_status(
-        successful_count=2,
-        failed_count=0
-    )
+    status = get_pipeline_status(successful_count=2, failed_count=0)
 
     assert status == PipelineStatus.SUCCESS
 
 
 def test_status_failed():
 
-    status = HistoricalIngestion.get_pipeline_status(
-        successful_count=0,
-        failed_count=2
-    )
+    status = get_pipeline_status(successful_count=0, failed_count=2)
 
     assert status == PipelineStatus.FAILED
 
 
 def test_status_partial_success():
 
-    status = HistoricalIngestion._get_pipeline_status(
-        successful_count=1,
-        failed_count=1
-    )
+    status = get_pipeline_status(successful_count=1, failed_count=1)
 
     assert status == PipelineStatus.PARTIAL_SUCCESS
 
@@ -51,16 +39,13 @@ def test_status_partial_success():
 # Persistence
 # --------------------------------------------------
 
-def test_persist_raw_data(
-    pipeline,
-    repository
-):
 
-    pipeline._persist_raw_data(
-        {
-            "AAPL": {"price": 100},
-            "MSFT": {"price": 200}
-        }
+def test_persist_raw_data(provider, repository):
+
+    from pipelines.historical_ingestion.tasks import persist_raw_data
+
+    persist_raw_data(
+        repository, provider, {"AAPL": {"price": 100}, "MSFT": {"price": 200}}
     )
 
     assert repository.save.call_count == 2
@@ -70,28 +55,21 @@ def test_persist_raw_data(
 # Empty Symbols
 # --------------------------------------------------
 
+
 @pytest.mark.asyncio
-async def test_empty_symbols(
-    logger,
-    provider,
-    processor,
-    repository
-):
+async def test_empty_symbols(logger, provider, aggregator, repository):
 
     pipeline = HistoricalIngestion(
         symbols=[],
         logger=logger,
         provider=provider,
-        processor=processor,
-        repository=repository
+        aggregator=aggregator,
+        repository=repository,
     )
 
     result = await pipeline.run()
 
-    assert result == Result(
-        successful={},
-        failed={}
-    )
+    assert result == Result(successful={}, failed={})
 
     logger.warning.assert_called_once()
 
@@ -100,26 +78,19 @@ async def test_empty_symbols(
 # Successful Run
 # --------------------------------------------------
 
-@pytest.mark.asyncio
-async def test_run_success(
-    pipeline,
-    processor,
-    successful_result,
-    repository
-):
 
-    processor.process.return_value = successful_result
+@pytest.mark.asyncio
+async def test_run_success(pipeline, aggregator, successful_result, repository):
+
+    aggregator.aggregate.return_value = successful_result
 
     result = await pipeline.run()
 
     assert result == successful_result
 
-    assert (
-        pipeline.status
-        == PipelineStatus.SUCCESS
-    )
+    assert pipeline.status == PipelineStatus.SUCCESS
 
-    processor.process.assert_called_once()
+    aggregator.aggregate.assert_called_once()
 
     assert repository.save.call_count == 2
 
@@ -128,57 +99,43 @@ async def test_run_success(
 # Partial Success
 # --------------------------------------------------
 
-@pytest.mark.asyncio
-async def test_run_partial_success(
-    pipeline,
-    processor,
-    partial_result
-):
 
-    processor.process.return_value = partial_result
+@pytest.mark.asyncio
+async def test_run_partial_success(pipeline, aggregator, partial_result):
+
+    aggregator.aggregate.return_value = partial_result
 
     await pipeline.run()
 
-    assert (
-        pipeline.status
-        == PipelineStatus.PARTIAL_SUCCESS
-    )
+    assert pipeline.status == PipelineStatus.PARTIAL_SUCCESS
 
 
 # --------------------------------------------------
 # Failed Run
 # --------------------------------------------------
 
-@pytest.mark.asyncio
-async def test_run_failed(
-    pipeline,
-    processor,
-    failed_result
-):
 
-    processor.process.return_value = failed_result
+@pytest.mark.asyncio
+async def test_run_failed(pipeline, aggregator, failed_result):
+
+    aggregator.aggregate.return_value = failed_result
 
     await pipeline.run()
 
-    assert (
-        pipeline.status
-        == PipelineStatus.FAILED
-    )
+    assert pipeline.status == PipelineStatus.FAILED
 
 
 # --------------------------------------------------
 # Provider Called For Each Symbol
 # --------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_provider_called_for_each_symbol(
-    pipeline,
-    provider,
-    processor,
-    successful_result
+    pipeline, provider, aggregator, successful_result
 ):
 
-    processor.process.return_value = successful_result
+    aggregator.aggregate.return_value = successful_result
 
     await pipeline.run()
 
@@ -186,18 +143,15 @@ async def test_provider_called_for_each_symbol(
 
 
 # --------------------------------------------------
-# Processor Receives Results
+# aggregator Receives Results
 # --------------------------------------------------
 
-@pytest.mark.asyncio
-async def test_processor_called(
-    pipeline,
-    processor,
-    successful_result
-):
 
-    processor.process.return_value = successful_result
+@pytest.mark.asyncio
+async def test_aggregator_called(pipeline, aggregator, successful_result):
+
+    aggregator.aggregate.return_value = successful_result
 
     await pipeline.run()
 
-    processor.process.assert_called_once()
+    aggregator.aggregate.assert_called_once()

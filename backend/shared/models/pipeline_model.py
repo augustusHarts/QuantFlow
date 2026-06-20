@@ -6,6 +6,7 @@ from shared.enums.datalayer import DataLayer
 from shared.enums.datasource import DataSource
 from typing import Any
 
+
 @dataclass(slots=True)
 class SaveRequest:
     layer: DataLayer
@@ -13,12 +14,14 @@ class SaveRequest:
     key: str
     payload: Any
 
+
 @dataclass
 class PipelineRun:
     status: PipelineStatus
     total_symbols: int
     successful_symbols: int
     failed_symbols: int
+
 
 @dataclass
 class DatasetMetaData:
@@ -30,4 +33,3 @@ class DatasetMetaData:
     processed_updated_at: datetime
     record_count: int
     pipeline_status: PipelineStatus
-    

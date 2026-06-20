@@ -1,18 +1,10 @@
 import pytest
 
-from unittest.mock import (
-    Mock,
-    AsyncMock
-)
+from unittest.mock import Mock, AsyncMock
 
-from pipelines.historical_ingestion.pipeline import (
-    HistoricalIngestion
-)
+from pipelines.historical_ingestion.pipeline import HistoricalIngestion
 
-from shared.models.ingestion_models import (
-    MarketSymbol,
-    Result
-)
+from shared.models.ingestion_models import MarketSymbol, Result
 
 from shared.enums.assettype import AssetType
 from shared.enums.datasource import DataSource
@@ -36,7 +28,7 @@ def provider():
 
 
 @pytest.fixture
-def processor():
+def aggregator():
     return Mock()
 
 
@@ -49,14 +41,8 @@ def repository():
 def symbols():
 
     return [
-        MarketSymbol(
-            ticker="AAPL",
-            asset_type=AssetType.EQUITY
-        ),
-        MarketSymbol(
-            ticker="MSFT",
-            asset_type=AssetType.EQUITY
-        )
+        MarketSymbol(ticker="AAPL", asset_type=AssetType.EQUITY),
+        MarketSymbol(ticker="MSFT", asset_type=AssetType.EQUITY),
     ]
 
 
@@ -64,11 +50,7 @@ def symbols():
 def successful_result():
 
     return Result(
-        successful={
-            "AAPL": {"price": 100},
-            "MSFT": {"price": 200}
-        },
-        failed={}
+        successful={"AAPL": {"price": 100}, "MSFT": {"price": 200}}, failed={}
     )
 
 
@@ -76,12 +58,7 @@ def successful_result():
 def partial_result():
 
     return Result(
-        successful={
-            "AAPL": {"price": 100}
-        },
-        failed={
-            "MSFT": Exception("bad")
-        }
+        successful={"AAPL": {"price": 100}}, failed={"MSFT": Exception("bad")}
     )
 
 
@@ -89,27 +66,17 @@ def partial_result():
 def failed_result():
 
     return Result(
-        successful={},
-        failed={
-            "AAPL": Exception("bad"),
-            "MSFT": Exception("bad")
-        }
+        successful={}, failed={"AAPL": Exception("bad"), "MSFT": Exception("bad")}
     )
 
 
 @pytest.fixture
-def pipeline(
-    logger,
-    provider,
-    processor,
-    repository,
-    symbols
-):
+def pipeline(logger, provider, aggregator, repository, symbols):
 
     return HistoricalIngestion(
         symbols=symbols,
         logger=logger,
         provider=provider,
-        processor=processor,
-        repository=repository
+        aggregator=aggregator,
+        repository=repository,
     )

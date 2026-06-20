@@ -1,7 +1,6 @@
 import pytest
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock
 
 from shared.enums.datalayer import DataLayer
 from shared.enums.datasource import DataSource

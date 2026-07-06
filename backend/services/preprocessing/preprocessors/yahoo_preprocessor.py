@@ -85,7 +85,7 @@ class YahooPreprocessor(Preprocessor):
             len(processed_records),
         )
 
-        symbol = PreprocessedSymbol(meta=processed_meta, records=processed_records)
+        symbol = PreprocessedSymbol(meta=processed_meta, prices=processed_records)
 
         self.validator.validate(symbol)
 

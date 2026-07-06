@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock
 
-from services.preprocessing.validators.preprocessor_validator import (
+from backend.services.preprocessing.validators.preprocessor_validator import (
     PreprocessorValidator,
 )
 from services.preprocessing.preprocessors.yahoo_preprocessor import YahooPreprocessor

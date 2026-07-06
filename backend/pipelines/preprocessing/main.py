@@ -17,7 +17,8 @@ def main():
     repository = DataRepository(root_dir=DATASET_DIR)
 
     preprocessor = YahooPreprocessor(
-        pipeline_logger.getChild("YahooPreprocessor"), validator=PreprocessorValidator()
+        pipeline_logger.getChild("YahooPreprocessor"), 
+        validator=PreprocessorValidator()
     )
 
     aggregator = PreprocessorAggregator(

@@ -35,7 +35,17 @@ class MetaData:
 @dataclass(slots=True)
 class PreprocessedSymbol:
     meta: MetaData
-    records: list[PriceRecord]
+    prices: list[PriceRecord]
+
+    @property
+    def records(self) -> list[PriceRecord]:
+        """Backward-compatible alias for `prices`.
+
+        Some validators and older code expect a `records` attribute.
+        Keep `prices` as the primary field and expose `records` to avoid
+        AttributeError when older code accesses `symbol.records`.
+        """
+        return self.prices
 
 
 @dataclass(slots=True)

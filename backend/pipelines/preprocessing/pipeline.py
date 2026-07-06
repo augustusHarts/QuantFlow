@@ -25,9 +25,9 @@ class PreprocessingPipeline:
 
     def run(self) -> PreprocessingResult:
 
-        keys = get_key_list(self.repository, BASE_LAYER)
+        symbols_by_provider  = get_key_list(self.repository, BASE_LAYER)
 
-        if not keys:
+        if not symbols_by_provider :
             self.logger.warning("No provider and keys founds")
             return PreprocessingResult(successful={}, failed={})
 
@@ -35,15 +35,15 @@ class PreprocessingPipeline:
 
         self.logger.info(
             "Preprocessing Started | source=%s | status=%s | total=%d",
-            keys.keys(),
+            symbols_by_provider .keys(),
             self.status.value,
-            sum(len(symbol) for symbol in keys.values()),
+            sum(len(symbol) for symbol in symbols_by_provider .values()),
         )
 
         symbols: list[tuple[DataSource, str]] = []
         results: list[PreprocessedSymbol | BaseException] = []
 
-        for provider, provider_symbols in keys.items():
+        for provider, provider_symbols in symbols_by_provider .items():
             for symbol in provider_symbols:
                 symbols.append((provider, symbol))
                 try:
@@ -64,7 +64,7 @@ class PreprocessingPipeline:
         self.logger.info(
             "Preprocessing Completed | status=%s | total=%d | successful=%d | failed=%d",
             self.status.value,
-            sum(len(symbol) for symbol in keys.values()),
+            sum(len(symbol) for symbol in symbols_by_provider .values()),
             len(aggregated.successful),
             len(aggregated.failed),
         )

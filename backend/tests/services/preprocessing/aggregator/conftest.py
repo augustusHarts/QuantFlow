@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from shared.models.preprocessing_model import PriceRecord, PreprocessedSymbol, MetaData
 from shared.enums.assettype import AssetType
 from shared.enums.datasource import DataSource
-from services.preprocessing.validators.preprocessor_validator import (
+from backend.services.preprocessing.validators.preprocessor_validator import (
     PreprocessorValidator,
 )
 from services.preprocessing.aggregators.preprocessor_aggregator import (
@@ -103,7 +103,7 @@ def valid_price_records():
 @pytest.fixture
 def valid_preprocessed_symbol(valid_metadata, valid_price_records):
     """Create a valid PreprocessedSymbol"""
-    return PreprocessedSymbol(meta=valid_metadata, records=valid_price_records)
+    return PreprocessedSymbol(meta=valid_metadata, prices=valid_price_records)
 
 
 @pytest.fixture
@@ -231,7 +231,7 @@ def preprocessing_results(valid_preprocessed_symbol):
         source=DataSource.YAHOO,
     )
     symbol_msft = PreprocessedSymbol(
-        meta=meta_msft, records=valid_preprocessed_symbol.records
+        meta=meta_msft, prices=valid_preprocessed_symbol.records
     )
 
     return [

@@ -22,6 +22,7 @@ class PreprocessorAggregator(Aggregator):
             if isinstance(result, BaseException):
                 failed[(provider, symbol)] = result
 
+                
                 self.logger.error(
                     "Symbol Preprocessing Failed | symbol=%s | exception=%s | message=%s",
                     symbol,

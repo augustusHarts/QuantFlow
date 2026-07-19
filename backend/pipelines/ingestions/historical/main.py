@@ -1,7 +1,7 @@
 import asyncio
 
 from shared.utils.logger import get_logger
-from pipelines.historical_ingestion.config import SYMBOLS
+from pipelines.ingestions.historical.config import SYMBOLS
 from shared.config.storage_config import DATASET_DIR
 from shared.config.ingestion_config import (
     BASE_URL,
@@ -14,7 +14,7 @@ from services.ingestion.providers.yahoo_provider import YahooProvider
 from services.ingestion.validators.yahoo_validator import YahooValidator
 from services.ingestion.aggregators.yahoo_aggregator import YahooAggregator
 from storage.repositories.data_repository import DataRepository
-from pipelines.historical_ingestion.pipeline import HistoricalIngestion
+from pipelines.ingestions.historical.pipeline import HistoricalIngestion
 from shared.enums.datasource import DataSource
 
 

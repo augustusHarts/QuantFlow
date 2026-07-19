@@ -1,7 +1,7 @@
 from pipelines.orchestration.master_pipeline import MasterPipeline
-from pipelines.historical_ingestion.pipeline import HistoricalIngestion
+from pipelines.ingestions.historical.pipeline import HistoricalIngestion
 from shared.utils.logger import get_logger
-from pipelines.historical_ingestion.config import SYMBOLS
+from pipelines.ingestions.historical.config import SYMBOLS
 from shared.config.storage_config import DATASET_DIR
 from shared.config.ingestion_config import (
     BASE_URL,

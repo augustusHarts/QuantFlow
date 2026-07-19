@@ -2,7 +2,7 @@ import pytest
 
 from unittest.mock import Mock, AsyncMock
 
-from pipelines.historical_ingestion.pipeline import HistoricalIngestion
+from pipelines.ingestions.historical.pipeline import HistoricalIngestion
 
 from shared.models.ingestion_models import MarketSymbol, Result
 

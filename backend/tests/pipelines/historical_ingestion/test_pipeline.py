@@ -4,9 +4,9 @@ from shared.models.ingestion_models import Result
 
 from shared.enums.pipelinestatus import PipelineStatus
 
-from pipelines.historical_ingestion.pipeline import HistoricalIngestion
+from pipelines.ingestions.historical.pipeline import HistoricalIngestion
 
-from pipelines.historical_ingestion.tasks import get_pipeline_status
+from pipelines.ingestions.historical.tasks import get_pipeline_status
 
 
 # --------------------------------------------------
@@ -42,7 +42,7 @@ def test_status_partial_success():
 
 def test_persist_raw_data(provider, repository):
 
-    from pipelines.historical_ingestion.tasks import persist_raw_data
+    from backend.pipelines.ingestions.historical.tasks import persist_raw_data
 
     persist_raw_data(
         repository, provider, {"AAPL": {"price": 100}, "MSFT": {"price": 200}}

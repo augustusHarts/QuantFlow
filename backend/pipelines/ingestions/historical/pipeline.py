@@ -6,7 +6,7 @@ from services.ingestion.interfaces.provider import Provider
 from services.ingestion.interfaces.aggregator import Aggregator
 from storage.repositories.data_repository import DataRepository
 from shared.models.ingestion_models import MarketSymbol
-from pipelines.historical_ingestion.tasks import persist_raw_data, get_pipeline_status
+from pipelines.ingestions.historical.tasks import persist_raw_data, get_pipeline_status
 from shared.enums.pipelinestatus import PipelineStatus
 from shared.models.ingestion_models import Result
 
